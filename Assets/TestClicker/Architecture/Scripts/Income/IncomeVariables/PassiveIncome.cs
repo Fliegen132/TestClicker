@@ -1,0 +1,53 @@
+using System;
+using UnityEngine;
+
+public class PassiveIncome : IIncomeStrategy, IUpgratbleIncome
+{
+    public event Action<int, int> OnUpgradeLevelChanged;
+    private DifficultySettings difficultySettings;
+    private int _price;
+    private int _lvl;
+    private int _income;
+
+    public PassiveIncome(DifficultySettings settings)
+    {
+        difficultySettings = settings;
+        _price = difficultySettings.StartPrice;
+        _income = difficultySettings.StartIncome;
+    }
+
+    public void Start()
+    {
+        OnUpgradeLevelChanged?.Invoke(_price, _lvl);
+    }
+
+    public void Upgrade()
+    {
+        if (ServiceLocator.Current.Get<Coins>().RemoveCoins(_price))
+        {
+            _price *= difficultySettings.MultiplyPrice;
+            _income *= difficultySettings.MultiplyIncome;
+            _lvl++;
+            OnUpgradeLevelChanged?.Invoke(_price, _lvl);
+        }
+    }
+
+    public int GetLvl() => _lvl;
+
+    private float _currentTime;
+    private const float _maxTime = 1;
+    public int GetIncome()
+    {
+        if (_currentTime < _maxTime)
+        {
+            _currentTime += Time.deltaTime;
+        }
+        else 
+        {
+            _currentTime = 0;
+            return _income;
+        }
+        return 0;
+    }
+    public int GetPrice() => _price;
+}
